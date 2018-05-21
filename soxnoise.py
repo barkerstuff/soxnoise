@@ -24,7 +24,6 @@ import curses
 from curses import wrapper
 import curses.panel
 
-playerlist=['mpv','mplayer','sox']
 colorlist=['pink','brown','white']
 
 # Set up the parser
