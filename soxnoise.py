@@ -41,10 +41,6 @@ sox_repeats=58; sox_center=1786
 sox_wave="0.00"; sox_bitrate = 16
 sox_reverb = 19
 
-# Set the target files
-pink_file = "/mnt/internal_large/Music/NOISE/pink noise broad.mp3"
-brown_file = "/mnt/internal_large/Music/NOISE/pinkbrown.mp3"
-
 # Do not alter this global. Needed so that sox knows whether or not to reinitialise the entire TUI
 tui_started = False
 
