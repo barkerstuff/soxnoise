@@ -20,6 +20,7 @@
 import subprocess
 import argparse
 from sys import exit
+from sys import stdout
 import curses
 from curses import wrapper
 import curses.panel
@@ -28,12 +29,15 @@ colorlist=['pink','brown','white']
 
 # Set up the parser
 parser = argparse.ArgumentParser(description="An ncurses utility for playing noise on the terminal with SoX")
-parser.set_defaults(color='pink',player='sox',volume=1,keepvolume=True)
+parser.set_defaults(color='pink',volume=1,keepvolume=True)
 parser.add_argument('-c','--color',help="Selects the colour of the noise to play. Available options are {0}".format(colorlist))
 parser.add_argument('-d','--duration',help="Play for a specified time and then stop. The format should be a string of hh:mm:dd or an integer value in seconds",type=str)
 parser.add_argument('-v','--volume',help="Sets the initial output volume. This takes a float.  Try to remain within values of 0-10 to prevent distortion",type=float)
 parser.add_argument('-t','--disabletui',help="Forces the pimping ncurses interface for sox.  Defaults to on anyway",action='store_true')
 args = parser.parse_args()
+
+# Set the window title
+stdout.write("\x1b]2;soxnoise\x07")
 
 # Sets up default sox parameters
 sox_repeats=58; sox_center=1786
@@ -50,7 +54,6 @@ def print_license():
 
 def main(stdscr):
     call_sox(stdscr)
-    print_license()
 
 # Stdscr is created by the sox wrapper which is wrapped around the tui initialisation
 # part of call_sox(stdscr)
@@ -91,6 +94,8 @@ def tui_init(stdscr):
     curses.init_pair(3,curses.COLOR_MAGENTA, curses.COLOR_BLACK)
     curses.init_pair(4,curses.COLOR_CYAN, curses.COLOR_BLACK)
     curses.init_pair(5,curses.COLOR_WHITE, curses.COLOR_BLACK)
+
+    print_license()
 
     # This function redraws the UI and screen
     # This is called below on the various key presses and actions to redraw the UI
@@ -141,7 +146,7 @@ def tui_init(stdscr):
         if c == ord('q'):
             while True:
                 f.kill()
-                exit()
+                cleanup()
 
         # Adjust the volume on the fly
         elif c == ord('9') or c == ord('-'):
@@ -257,13 +262,21 @@ def call_sox(stdscr):
         if not args.disabletui:
             tui_init(stdscr)
 
-print_license()
+
+# Called to shut everything down
+def cleanup():
+    # Reset terminal title
+    stdout.write("\x1b]2;\x07")
+
+    # Needed without the TUI
+    subprocess.call(['clear'])
+
+    print_license()
+    exit()
 
 if __name__ == '__main__':
     try:
         wrapper(main)
     except KeyboardInterrupt:
-        subprocess.call(['clear'])
-        print_license()
-
+        cleanup()
 
