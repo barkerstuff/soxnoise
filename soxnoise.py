@@ -17,6 +17,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+# ToDo
+# 1) Test on Windows
+# 2) Test on BSD
+# 3) Change mute to suspend (use True/False flagging to get this done) in order to save CPU cycles
+# 4) Add control over more parameters in SoX
+
 import subprocess
 import argparse
 from sys import exit
@@ -64,7 +70,7 @@ def tui_init(stdscr):
     # Makes the cursor invisible
     curses.curs_set(0)
 
-    # Disabled echo.  Not needed when using wrapper
+    # Disabled echo.  Not needed when using curses.wrapper()
     #curses.noecho()
 
     # Needed to return the timeout back to its default after the help menu thing lengthens it
@@ -188,6 +194,8 @@ def tui_init(stdscr):
         elif c == ord('R'):
             if sox_reverb > 10:
                 sox_reverb -= 10
+            else:
+                sox_reverb = 0
             f.kill(); call_sox(stdscr); update()
 
         # Switch noise types on the fly
