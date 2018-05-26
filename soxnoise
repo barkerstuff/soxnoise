@@ -21,7 +21,6 @@
 # - Test on Windows
 # - Test on BSD
 # - Maybe add a pink+brown option
-# - Make log scale and tremolo frequency work
 
 import subprocess
 import argparse
@@ -30,8 +29,6 @@ from sys import stdout
 import curses
 from curses import wrapper
 import curses.panel
-from math import exp
-from math import log
 
 colorlist=['pink','brown','white']
 
