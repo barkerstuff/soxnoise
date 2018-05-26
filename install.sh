@@ -37,6 +37,6 @@ fi
 echo -n "The next step is to install soxnoise to /usr/bin. Would you like to continue? "
 read answer
 if [[ answer == "y" || answer == "Y" ]]; then
-        sudo cp soxnoise.py /usr/bin/soxnoise.py
+        sudo cp soxnoise /usr/bin/soxnoise
 fi
 
