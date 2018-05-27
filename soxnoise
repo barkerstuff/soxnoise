@@ -20,7 +20,7 @@
 # ToDo
 # - Test on Windows
 # - Test on BSD
-# - Maybe add a pink+brown option
+# - Consider adding a small random component to the values 
 
 import subprocess
 import argparse
@@ -30,20 +30,24 @@ import curses
 from curses import wrapper
 import curses.panel
 
-colorlist=['pink','brown','white']
+colorlist=['pink','brown','white','pinkbrown']
 
 # Set up the parser
 parser = argparse.ArgumentParser(description="An ncurses utility for playing noise on the terminal with SoX")
-parser.set_defaults(color='pink',volume=1,keepvolume=True,reverb=0,centerfreq=1786,bitdepth=16,tremolo_speed=1,tremolo_depth=0)
+parser.set_defaults(color='pink',volume=1,keepvolume=True,reverb=0,centerfreq=1786,bitdepth=16,tremolo_speed=0.1,tremolo_depth=0,channels=2,duration=0,sinemod=False,sinemod_min_vol=90,sinemod_speed=0.1)
 parser.add_argument('-c','--color',help="Selects the colour of the noise to play. Available options are {0}.".format(colorlist))
+parser.add_argument('-C','--channels',help="Selects the number of channels to use.  Default is 2 (stereo)",type=int)
 parser.add_argument('-b','--bitdepth',help="Sets the bit depth.  Typical values are 16 and 24.",type=int)
 parser.add_argument('-d','--duration',help="Play for a specified time and then stop. The format should be a string of hh:mm:dd or an integer value in seconds.",type=str)
+parser.add_argument('-s','--sinemod',help="Modulate the noise with a sine wave.  Gives a smoother, arguably more pleasing output",action='store_true')
 parser.add_argument('-v','--volume',help="Sets the initial output volume. This takes a float.  Try to remain within values of 0-10 to prevent distortion.",type=float)
 parser.add_argument('-n','--disabletui',help="Disables the ncurses interface. This will make soxnoise non-interactive.",action="store_true")
 parser.add_argument('-r','--reverb',help="Sets an initial reverb level (values from 0-100).",type=int)
-parser.add_argument('-C','--centerfreq',help="Sets an initial center frequency (values in Hz from 1-20000)",type=int)
+parser.add_argument('-f','--centerfreq',help="Sets an initial center frequency (values in Hz from 1-20000)",type=int)
+parser.add_argument('-m','--sinemod_speed',help="Sets the speed of the sinewave modulation effect (values in Hz from 0-20,000). Requires setting --sinemod_min_vol",type=float)
+parser.add_argument('-M','--sinemod_min_vol',help="Sets the minimum value of the modulated sine output.  This effectively sets the minimum noise volume. (values in from 1-100). Requires setting --sinemod_speed.",type=int)
 parser.add_argument('-t','--tremolo_speed',help="Sets the speed of the tremolo effect (values in Hz from 0-20,000). It require also setting the --tremolo_depth.",type=float)
-parser.add_argument('-T','--tremolo_depth',help="Sets the depth of the tremolo effect (values in from 1-100). It require also setting the --tremolo_speed.",type=int)
+parser.add_argument('-T','--tremolo_depth',help="Sets the depth of the tremolo effect (values in from 1-100). This requires also setting the --tremolo_speed.",type=int)
 args = parser.parse_args()
 
 # Sanity check on the args
@@ -51,6 +55,8 @@ if 0 < args.reverb > 100:
     exit('Please specify a reverb from 0-100')
 if 1 < args.centerfreq > 20000:
     exit('Please specify a center frequency from 1 to 20,000 (in Hz)')
+if int(args.channels) < 1 or int(args.channels) < 0:
+    exit('The number of channels must be 1 at minimum and may not be negative')
 if 0 < args.tremolo_speed > 20000:
     exit('Please specify a tremolo speed from 1 to 20000 (in Hz')
 if 0 < args.tremolo_depth > 100:
@@ -59,6 +65,8 @@ if  args.tremolo_depth and not args.tremolo_speed and not args.tremolo_depth == 
     exit('Specifying tremolo depth requires also specifying tremolo speed')
 if  args.tremolo_speed and not args.tremolo_depth and not args.tremolo_depth == 0:
     exit('Specifying tremolo speed requires also specifying tremolo depth')
+if args.color not in colorlist:
+    exit('An invalid noise colour was specified')
 
 # Set the window title
 stdout.write("\x1b]2;soxnoise\x07")
@@ -116,6 +124,7 @@ def tui_init(stdscr):
     curses.init_pair(3,curses.COLOR_MAGENTA, curses.COLOR_BLACK)
     curses.init_pair(4,curses.COLOR_CYAN, curses.COLOR_BLACK)
     curses.init_pair(5,curses.COLOR_WHITE, curses.COLOR_BLACK)
+    curses.init_pair(6,curses.COLOR_BLUE, curses.COLOR_BLACK)
 
     print_license()
 
@@ -137,22 +146,34 @@ def tui_init(stdscr):
             stdscr.addstr(args.color,curses.color_pair(3))
             stdscr.addstr(" vol. ",curses.color_pair(4))
             stdscr.addstr(str(args.volume),curses.color_pair(4))
+        if args.color == 'pinkbrown':
+            stdscr.addstr(args.color,curses.color_pair(2))
+            stdscr.addstr(" vol. ",curses.color_pair(4))
+            stdscr.addstr(str(args.volume),curses.color_pair(4))
         if args.color == 'brown':
             stdscr.addstr(args.color,curses.color_pair(1))
             stdscr.addstr(" vol. ",curses.color_pair(4))
             stdscr.addstr(str(args.volume),curses.color_pair(4))
         # Prints the reverb level
-        stdscr.addstr("  (r)everb. ",curses.color_pair(1))
+        stdscr.addstr(2,1,"(r)everb. ",curses.color_pair(1))
         stdscr.addstr(str(args.reverb),curses.color_pair(1))
         # Prints the center frequency
-        stdscr.addstr("  (c)enterHz. ",curses.color_pair(2))
-        stdscr.addstr(str(args.centerfreq),curses.color_pair(2))
+        stdscr.addstr(2,23,"(c)enterHz. ",curses.color_pair(6))
+        stdscr.addstr(str(args.centerfreq),curses.color_pair(6))
         # Prints the center depth
-        stdscr.addstr("  (t)remolo depth. ",curses.color_pair(1))
-        stdscr.addstr(str(args.tremolo_depth),curses.color_pair(1))
+        stdscr.addstr(3,1,"(t)remolo depth. ",curses.color_pair(3))
+        stdscr.addstr(str(args.tremolo_depth),curses.color_pair(3))
         # Prints the tremolo speed
-        stdscr.addstr("  (f)req. ",curses.color_pair(1))
-        stdscr.addstr(str(args.tremolo_speed),curses.color_pair(1))
+        stdscr.addstr(3,23,"tremolo (f)req. ",curses.color_pair(3))
+        stdscr.addstr(str(args.tremolo_speed),curses.color_pair(3))
+
+        # Prints the sinemod sine frequency if enabled
+        if args.sinemod:
+            stdscr.addstr(4,1,"(s)ine frequency ",curses.color_pair(2))
+            stdscr.addstr(str(args.sinemod_speed),curses.color_pair(2))
+            # Prints the sinemod minimum volume
+            stdscr.addstr(4,23,"sine min. (v)olume ",curses.color_pair(2))
+            stdscr.addstr(str(args.sinemod_min_vol),curses.color_pair(2))
 
         # Refresh screen
         try:
@@ -207,11 +228,10 @@ def tui_init(stdscr):
         # M to mute
         elif c == ord('m'):
             if args.volume > 0:
+                oldvol=float(args.volume)
                 args.volume = 0.0
-                #oldvol=float(args.volume)
             elif args.volume == 0.0:
-                #args.volume = float(oldvol)
-                args.volume = 1
+                args.volume = float(oldvol)
             f.kill(); call_sox(stdscr); update()
 
         # Adjusts center frequency on the fly in Hz
@@ -224,16 +244,60 @@ def tui_init(stdscr):
                 args.centerfreq -= 100
             f.kill(); call_sox(stdscr); update()
 
+        # Adjusts sinemod minimum volume
+        elif c == ord('v'):
+            if args.sinemod_min_vol < 90:
+                args.sinemod_min_vol += 10
+            else:
+                args.sinemod_min_vol = 100
+            f.kill(); call_sox(stdscr); update()
+        elif c == ord('V'):
+            if args.sinemod_min_vol > 10:
+                args.sinemod_min_vol -= 10
+            else:
+                args.sinemod_min_vol = 0
+            f.kill(); call_sox(stdscr); update()
+        
+        # Toggles sine wave modulation mode
+        elif c == ord('S'):
+            if args.sinemod == True:
+                args.sinemod = False
+            else:
+                args.sinemod = True
+            f.kill(); call_sox(stdscr); update()
+        
         # Adjusts tremolo depth
         elif c == ord('t'):
             if args.tremolo_depth < 90:
                 args.tremolo_depth += 10
+            else:
+                args.tremolo_depth = 100
             f.kill(); call_sox(stdscr); update()
         elif c == ord('T'):
             if args.tremolo_depth > 10:
                 args.tremolo_depth -= 10
             else:
                 args.tremolo_depth = 0
+            f.kill(); call_sox(stdscr); update()
+        
+        # Adjusts sinemod frequency
+        elif c == ord('s'):
+
+            stdscr.timeout(1000000)
+            curses.echo(1)
+
+            new_freq = ""
+            while len(str(new_freq)) == 0:
+                stdscr.addstr(1,1,"Enter value: ")
+                new_freq = stdscr.getstr(1,14)
+            try:
+                args.sinemod_speed = float(new_freq)
+            except:
+                new_freq = 1
+                stdscr.addstr(2,1,"Invalid")
+            curses.echo(0)
+
+            # Sets a longer timeout to wait for getch 
             f.kill(); call_sox(stdscr); update()
 
         # Adjusts tremolo frequency
@@ -244,20 +308,16 @@ def tui_init(stdscr):
 
             new_freq = ""
             while len(str(new_freq)) == 0:
-                new_freq = stdscr.getstr()
-            args.tremolo_speed = float(new_freq)
+                stdscr.addstr(1,1,"Enter value: ")
+                new_freq = stdscr.getstr(1,14)
+            try:
+                args.tremolo_speed = float(new_freq)
+            except:
+                new_freq = 1
+                stdscr.addstr(2,1,"Invalid")
             curses.echo(0)
-            # Sets a longer timeout to wait for getch (since the user probably wants to read it)
-            f.kill(); call_sox(stdscr); update()
 
-
-        elif c == ord('F'):
-            position = calculate_logposition(args.tremolo_speed)
-            if args.tremolo_speed > 0.1:
-                position -= 1
-                args.tremolo_speed = calculate_logvalue(position)
-            else:
-                args.tremolo_speed = 0
+            # Sets a longer timeout to wait for getch 
             f.kill(); call_sox(stdscr); update()
 
         # Adjusts reverb
@@ -284,6 +344,9 @@ def tui_init(stdscr):
         elif c == ord('p'):
             args.color = 'pink'
             f.kill(); call_sox(stdscr); update()
+        elif c == ord('P'):
+            args.color = 'pinkbrown'
+            f.kill(); call_sox(stdscr); update()
 
         # Brings up help dialog
         elif c == ord('h'):
@@ -293,20 +356,21 @@ def tui_init(stdscr):
 
             # Try and except block to catch when the term gets too tiny
             try:
-                stdscr.addstr(1,1,"In help")
-                stdscr.addstr(3,0,"9/0 -/+  : adjusts volume")
-                stdscr.addstr(4,0,"c/C : adjusts center frequency")
-                stdscr.addstr(5,0,"r/R : adjusts reverb level")
-                stdscr.addstr(6,0,"f/F : adjusts tremolo frequency")
-                stdscr.addstr(7,0,"d/D : adjusts tremolo depth")
-                stdscr.addstr(9,0,"m : mute the audio")
-                stdscr.addstr(10,0,"p/b/w : selects different noise profiles")
-                stdscr.addstr(11,0," (p)ink (b)rown (w)hite",curses.color_pair(2))
-                stdscr.addstr(12,0,"  press h to exit help",curses.color_pair(1))
+                stdscr.addstr(6,0,"9/0 -/+ : adjusts volume")
+                stdscr.addstr(7,0,"m       : toggle mute status")
+                stdscr.addstr(8,0,"c/C     : adjusts center frequency")
+                stdscr.addstr(9,0,"r/R     : adjusts reverb level")
+                stdscr.addstr(10,0,"f       : set tremolo frequency")
+                stdscr.addstr(11,0,"d/D     : adjusts tremolo depth")
+                stdscr.addstr(12,0,"S       : toggles sine modulation mode")
+                stdscr.addstr(13,0,"f/F     : adjusts minimum noise volume when sine modulation enabled")
+                stdscr.addstr(14,0,"s       : set sine modulation frequency when enabled")
+                stdscr.addstr(16,0,"p/b/w   : selects different noise profiles")
+                stdscr.addstr(17,0,"  (p)ink (b)rown (w)hite (P)inkbrown",curses.color_pair(2))
+                stdscr.addstr(18,0,"      press h to exit help",curses.color_pair(1))
             except:
                 stdscr.clear()
                 stdscr.addstr('Terminal too small')
-
 
             # Waits for help window to close before allowing any further updates to the screen
             b = stdscr.getch()
@@ -320,39 +384,64 @@ def tui_init(stdscr):
 def call_sox(stdscr):
     global f, tui_started
 
-    # If duration is specified as a starting argument then sox will receive this parameter
-    #  the correct format is either hh:mm:ss or a straight integer of the desired seconds duration
+    # Create the empty list to work with 
+    subprocess_list = []
+
+    # Parameters that are always passed 
+    subprocess_list.extend(['play','-q','-b',str(args.bitdepth), '-c',str(args.channels),'--null'])
+    
+    # Add the colour synth commands
+    if args.sinemod:
+        if args.color == 'pinkbrown':
+            subprocess_list.extend(['synth',str(args.duration),'brownnoise','synth','pinknoise','mix','synth','sine','amod',str(args.sinemod_speed),str(args.sinemod_min_vol)])
+        elif args.color == 'brown':
+            subprocess_list.extend(['synth',str(args.duration),'brownnoise','mix','synth','sine','amod',str(args.sinemod_speed),str(args.sinemod_min_vol)])
+        elif args.color == 'pink':
+            subprocess_list.extend(['synth',str(args.duration),'pinknoise','mix','synth','sine','amod',str(args.sinemod_speed),str(args.sinemod_min_vol)])
+        elif args.color == 'white':
+            subprocess_list.extend(['synth',str(args.duration),'whitenoise','mix','synth','sine','amod',str(args.sinemod_speed),str(args.sinemod_min_vol)])
+    else:
+        if args.color == 'brown':
+            subprocess_list.extend(['synth',str(args.duration),'brownnoise'])
+        elif args.color == 'pink':
+            subprocess_list.extend(['synth',str(args.duration),'pinknoise'])
+        elif args.color == 'white':
+            subprocess_list.extend(['synth',str(args.duration),'whitenoise'])
+        elif args.color == 'pinkbrown':
+            subprocess_list.extend(['synth',str(args.duration),'brownnoise','synth','pinknoise'])
+    
+    # Set the band and centerfreq
+    subprocess_list.extend(['band','-n',str(args.centerfreq),'499'])
+
+    # Add the tremolo itself
+    if args.tremolo_depth > 0:
+        subprocess_list.extend(['tremolo',str(args.tremolo_speed),str(args.tremolo_depth)])
+
+    # Add the reverb
+    if args.reverb > 0:
+        subprocess_list.extend(['reverb',str(args.reverb)])
+
+    # Add some EQ and volume
+    subprocess_list.extend(['bass','-11','treble','-1','vol',str(args.volume)])
+    
+    # Don't start the subprocess if SoX is muted
     if args.volume == 0:
         subprocess_list = []
-    elif args.duration and not args.tremolo_depth==0:
-        subprocess_list = ['play','-b',str(args.bitdepth),'-c','2','--null','synth',str(args.duration),str(args.color)+'noise','band','-n',str(args.centerfreq),'499','tremolo',str(args.tremolo_speed),str(args.tremolo_depth),'reverb',str(args.reverb),'bass','-11','treble','-1','vol',str(args.volume)]
-    elif args.duration and args.tremolo_depth==0:
-        subprocess_list = ['play','-b',str(args.bitdepth),'-c','2','--null','synth',str(args.duration),str(args.color)+'noise','band','-n',str(args.centerfreq),'reverb',str(args.reverb),'bass','-11','treble','-1','vol',str(args.volume)]
-    elif not args.duration and args.tremolo_depth==0:
-        subprocess_list = ['play','-q','-b',str(args.bitdepth),'-c','2','--null','synth',str(args.color)+'noise','band','-n',str(args.centerfreq),'reverb',str(args.reverb),'bass','-11','treble','-1','vol',str(args.volume)]
-    elif not args.duration and not args.tremolo_depth==0:
-        subprocess_list = ['play','-q','-b',str(args.bitdepth),'-c','2','--null','synth',str(args.color)+'noise','band','-n',str(args.centerfreq),'499','tremolo',str(args.tremolo_speed),str(args.tremolo_depth),'reverb',str(args.reverb),'bass','-11','treble','-1','vol',str(args.volume)]
-    else:
-        print('Oops. Fell off the end of the subprocess caller block. Please send help')
-
+        
     # Used for subprocess debug
     #exit(" ".join(subprocess_list))
-
-    # Don't start the subprocess if SoX is muted
-    print(args.volume)
-    if args.volume == 0:
-        pass
 
     # If TUI is disabled then keep the normal sox console output
     # Otherwise pipe it all so that only the TUI can be seen
     elif args.disabletui:
         curses.endwin()
+        print(" ".join(subprocess_list))
         f = subprocess.call(subprocess_list)
         curses.echo(1); curses.nocbreak(); curses.curs_set(1)
     elif not args.disabletui:
-        #f = subprocess.Popen(subprocess_list,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
-        f = subprocess.Popen(subprocess_list) # Useful for troubleshooting
+        f = subprocess.Popen(subprocess_list,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
 
+    # Init the TUI unless disabled
     if not tui_started:
         # Starts the tui unless explicitly disabled
         if not args.disabletui:
@@ -362,6 +451,11 @@ def call_sox(stdscr):
 def cleanup():
     # Reset terminal title
     stdout.write("\x1b]2;\x07")
+    
+    try:
+        f.close()
+    except:
+        pass
 
     print_license()
     exit()
