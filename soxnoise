@@ -411,7 +411,7 @@ def call_sox(stdscr):
             subprocess_list.extend(['synth',str(args.duration),'brownnoise','synth','pinknoise'])
     
     # Set the band and centerfreq
-    subprocess_list.extend(['band','-n',str(args.centerfreq),'499'])
+    subprocess_list.extend(['band','-n',str(args.centerfreq),'20000'])
 
     # Add the tremolo itself
     if args.tremolo_depth > 0:
