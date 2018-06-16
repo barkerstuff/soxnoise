@@ -348,7 +348,6 @@ def tui_init(stdscr):
             try:
                 stdscr.addstr(6,0,"9/0 -/+ : adjusts volume")
                 stdscr.addstr(7,0,"m       : toggle mute status")
-                stdscr.addstr(8,0,"c/C     : adjusts center frequency")
                 stdscr.addstr(9,0,"r/R     : adjusts reverb level")
                 stdscr.addstr(10,0,"f       : set tremolo frequency")
                 stdscr.addstr(11,0,"d/D     : adjusts tremolo depth")
