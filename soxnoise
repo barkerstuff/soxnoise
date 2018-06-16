@@ -132,7 +132,7 @@ def tui_init(stdscr):
     # This is called below on the various key presses and actions to redraw the UI
     def update():
         # Sets args.volume so that it stays formatted to just a few decimal places
-        args.volume = float("{:0.1f}".format(args.volume))
+        args.volume = float("{:0.2f}".format(args.volume))
 
         # Clears the main curses screen
         stdscr.clear()
@@ -196,33 +196,35 @@ def tui_init(stdscr):
         c = stdscr.getch()
 
     	# Now take user input
+
+        # Quit function
         if c == ord('q'):
             while True:
                 f.kill()
                 cleanup()
+
         # Adjust the volume on the fly (smaller increment)
-        elif c == ord('-'):
-            if args.volume > 0.10:
-                args.volume -= 0.10
-            elif args.volume <= 0.10:
+        elif c == ord('-') or c == ord('_'):
+            if args.volume > 0.025:
+                args.volume -= 0.025
+            elif args.volume <= 0.025:
                 args.volume = 0
             f.kill(); call_sox(stdscr); update()
         elif c == ord('=') or c == ord('+'):
-            if args.volume < 30 or c == ord('='):
-                args.volume += 0.10
+            if args.volume < 10 and c == ord('='):
+                args.volume += 0.025
             f.kill(); call_sox(stdscr); update()
 
 
         # Adjust the volume on the fly (larger increment)
         elif c == ord('9'):
-            if args.volume > 0.25:
-                args.volume -= 0.25
-            elif args.volume <= 0.25:
+            if args.volume > 0.2:
+                args.volume -= 0.2
+            elif args.volume <= 0.2:
                 args.volume = 0
             f.kill(); call_sox(stdscr); update()
-        elif c == ord('0'):
-            if args.volume < 30 or c == ord('='):
-                args.volume += 0.25
+        elif c == ord('0') and args.volume < 10:
+            args.volume += 0.2
             f.kill(); call_sox(stdscr); update()
 
         # M to mute
