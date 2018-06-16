@@ -9,13 +9,15 @@ This is an curses-based program that works interactively to perform on-the-fly a
 parameters such as noise colour, centre frequency, reverb levels and volume.  It also supports features such as sine wave modulation to create (arguably) more pleasing noise profiles.
 
 ## Examples
-While soxnoise can be controlled interactively, you can also specify parameters on launch
+While soxnoise can be controlled interactively, you can also specify all parameters on launch, e.g:
 
 #### To play pink + brown noise with a volume of 1
 soxnoise -c pinkbrown -v 1
+#### To play soft pink noise with a volume of 1
+soxnoise -c pink -s -v 1
 #### To play white noise with reverb level of 40% 
 soxnoise -c white -r 40
-#### To simulate ocean type waves with pink noise and tremolo
+#### To simulate ocean type waves with pink noise and tremolo that will reduce the volume down to a minimum of 10%
 soxnoise -c pink -t 0.1 -T 10 
 #### To simulate ocean type waves with pink noise (minimum volume of 20% and coming every 10 seconds) and soft sine wave modulation
 soxnoise -c pink -s -m 0.1 -M 20
