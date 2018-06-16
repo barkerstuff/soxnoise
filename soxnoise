@@ -34,7 +34,7 @@ colorlist=['pink','brown','white','pinkbrown']
 
 # Set up the parser
 parser = argparse.ArgumentParser(description="An ncurses utility for playing noise on the terminal with SoX")
-parser.set_defaults(color='pink',volume=1,keepvolume=True,reverb=0,maxvol=2,centerfreq=1786,bitdepth=16,tremolo_speed=0.1,tremolo_depth=0,channels=2,duration=0,sinemod=False,sinemod_min_vol=90,sinemod_speed=0.1)
+parser.set_defaults(color='pink',volume=1,keepvolume=True,reverb=0,maxvol=2,bitdepth=16,tremolo_speed=0.1,tremolo_depth=0,channels=2,duration=0,sinemod=False,sinemod_min_vol=90,sinemod_speed=0.1)
 parser.add_argument('-c','--color',help="Selects the colour of the noise to play. Available options are {0}.".format(colorlist))
 parser.add_argument('-C','--channels',help="Selects the number of channels to use.  Default is 2 (stereo)",type=int)
 parser.add_argument('-b','--bitdepth',help="Sets the bit depth.  Typical values are 16 and 24.",type=int)
@@ -44,7 +44,6 @@ parser.add_argument('-v','--volume',help="Sets the initial output volume. This t
 parser.add_argument('-V','--maxvolume',help="Sets the maximum sox output volume. This takes a float.  Try to remain within values of 0-2 to minimise distortion.",type=float)
 parser.add_argument('-n','--disabletui',help="Disables the ncurses interface. This will make soxnoise non-interactive.",action="store_true")
 parser.add_argument('-r','--reverb',help="Sets an initial reverb level (values from 0-100).",type=int)
-parser.add_argument('-f','--centerfreq',help="Sets an initial center frequency (values in Hz from 1-20000)",type=int)
 parser.add_argument('-m','--sinemod_speed',help="Sets the speed of the sinewave modulation effect (values in Hz from 0-20,000). Requires setting --sinemod_min_vol",type=float)
 parser.add_argument('-M','--sinemod_min_vol',help="Sets the minimum value of the modulated sine output.  This effectively sets the minimum noise volume. (values in from 1-100). Requires setting --sinemod_speed.",type=int)
 parser.add_argument('-t','--tremolo_speed',help="Sets the speed of the tremolo effect (values in Hz from 0-20,000). It require also setting the --tremolo_depth.",type=float)
@@ -54,9 +53,7 @@ args = parser.parse_args()
 # Sanity check on the args
 if 0 < args.reverb > 100:
     exit('Please specify a reverb from 0-100')
-if 1 < args.centerfreq > 20000:
-    exit('Please specify a center frequency from 1 to 20,000 (in Hz)')
-if int(args.channels) < 1 or int(args.channels) < 0:
+if int(args.channels) < 1:
     exit('The number of channels must be 1 at minimum and may not be negative')
 if 0 < args.tremolo_speed > 20000:
     exit('Please specify a tremolo speed from 1 to 20000 (in Hz')
@@ -158,10 +155,7 @@ def tui_init(stdscr):
         # Prints the reverb level
         stdscr.addstr(2,1,"(r)everb. ",curses.color_pair(1))
         stdscr.addstr(str(args.reverb),curses.color_pair(1))
-        # Prints the center frequency
-        stdscr.addstr(2,23,"(c)enterHz. ",curses.color_pair(6))
-        stdscr.addstr(str(args.centerfreq),curses.color_pair(6))
-        # Prints the center depth
+        # Prints the tremolo depth
         stdscr.addstr(3,1,"(t)remolo depth. ",curses.color_pair(3))
         stdscr.addstr(str(args.tremolo_depth),curses.color_pair(3))
         # Prints the tremolo speed
@@ -238,16 +232,6 @@ def tui_init(stdscr):
                 args.volume = 0.0
             elif args.volume == 0.0:
                 args.volume = float(oldvol)
-            f.kill(); call_sox(stdscr); update()
-
-        # Adjusts center frequency on the fly in Hz
-        elif c == ord('c'):
-            if args.centerfreq < 4000:
-                args.centerfreq += 100
-            f.kill(); call_sox(stdscr); update()
-        elif c == ord('C'):
-            if args.centerfreq > 100:
-                args.centerfreq -= 100
             f.kill(); call_sox(stdscr); update()
 
         # Adjusts sinemod minimum volume
@@ -414,11 +398,13 @@ def call_sox(stdscr):
         elif args.color == 'white':
             subprocess_list.extend(['synth',str(args.duration),'whitenoise'])
         elif args.color == 'pinkbrown':
-            subprocess_list.extend(['synth',str(args.duration),'brownnoise','mix','pinknoise'])
+            # Works best when the noise is downmixed to single channel
+            subprocess_list.extend(['-c','1','synth',str(args.duration),'pinknoise','mix','brownnoise'])
     
-    # Set the band and centerfreq
-    subprocess_list.extend(['band','-n',str(args.centerfreq),'20000'])
+    # Set the band and centerfreq.  Currently hardcoded to central freq of 2k and bandwidth of 20k
+    subprocess_list.extend(['band','-n','2000','20000'])
 
+    
     # Add the tremolo itself
     if args.tremolo_depth > 0:
         subprocess_list.extend(['tremolo',str(args.tremolo_speed),str(args.tremolo_depth)])
@@ -428,7 +414,7 @@ def call_sox(stdscr):
         subprocess_list.extend(['reverb',str(args.reverb)])
 
     # Add some EQ and volume
-    subprocess_list.extend(['bass','-11','treble','-1','vol',str(args.volume)])
+    subprocess_list.extend(['bass','-6','treble','-1','vol',str(args.volume)])
     
     # Don't start the subprocess if SoX is muted
     if args.volume == 0:
