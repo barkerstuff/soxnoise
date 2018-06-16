@@ -34,13 +34,14 @@ colorlist=['pink','brown','white','pinkbrown']
 
 # Set up the parser
 parser = argparse.ArgumentParser(description="An ncurses utility for playing noise on the terminal with SoX")
-parser.set_defaults(color='pink',volume=1,keepvolume=True,reverb=0,centerfreq=1786,bitdepth=16,tremolo_speed=0.1,tremolo_depth=0,channels=2,duration=0,sinemod=False,sinemod_min_vol=90,sinemod_speed=0.1)
+parser.set_defaults(color='pink',volume=1,keepvolume=True,reverb=0,maxvol=2,centerfreq=1786,bitdepth=16,tremolo_speed=0.1,tremolo_depth=0,channels=2,duration=0,sinemod=False,sinemod_min_vol=90,sinemod_speed=0.1)
 parser.add_argument('-c','--color',help="Selects the colour of the noise to play. Available options are {0}.".format(colorlist))
 parser.add_argument('-C','--channels',help="Selects the number of channels to use.  Default is 2 (stereo)",type=int)
 parser.add_argument('-b','--bitdepth',help="Sets the bit depth.  Typical values are 16 and 24.",type=int)
 parser.add_argument('-d','--duration',help="Play for a specified time and then stop. The format should be a string of hh:mm:dd or an integer value in seconds.",type=str)
 parser.add_argument('-s','--sinemod',help="Modulate the noise with a sine wave.  Gives a smoother, arguably more pleasing output",action='store_true')
-parser.add_argument('-v','--volume',help="Sets the initial output volume. This takes a float.  Try to remain within values of 0-10 to prevent distortion.",type=float)
+parser.add_argument('-v','--volume',help="Sets the initial output volume. This takes a float.  Try to remain within values of 0-2 to prevent distortion.",type=float)
+parser.add_argument('-V','--maxvolume',help="Sets the maximum sox output volume. This takes a float.  Try to remain within values of 0-2 to minimise distortion.",type=float)
 parser.add_argument('-n','--disabletui',help="Disables the ncurses interface. This will make soxnoise non-interactive.",action="store_true")
 parser.add_argument('-r','--reverb',help="Sets an initial reverb level (values from 0-100).",type=int)
 parser.add_argument('-f','--centerfreq',help="Sets an initial center frequency (values in Hz from 1-20000)",type=int)
@@ -211,7 +212,7 @@ def tui_init(stdscr):
                 args.volume = 0
             f.kill(); call_sox(stdscr); update()
         elif c == ord('=') or c == ord('+'):
-            if args.volume < 10 and c == ord('='):
+            if args.volume < args.maxvol:
                 args.volume += 0.025
             f.kill(); call_sox(stdscr); update()
 
@@ -223,8 +224,11 @@ def tui_init(stdscr):
             elif args.volume <= 0.2:
                 args.volume = 0
             f.kill(); call_sox(stdscr); update()
-        elif c == ord('0') and args.volume < 10:
-            args.volume += 0.2
+        elif c == ord('0'):
+            if args.volume < args.maxvol:
+                args.volume += 0.2
+            else:
+                args.volume = args.maxvol
             f.kill(); call_sox(stdscr); update()
 
         # M to mute
