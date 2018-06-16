@@ -414,7 +414,7 @@ def call_sox(stdscr):
         elif args.color == 'white':
             subprocess_list.extend(['synth',str(args.duration),'whitenoise'])
         elif args.color == 'pinkbrown':
-            subprocess_list.extend(['synth',str(args.duration),'brownnoise','synth','pinknoise'])
+            subprocess_list.extend(['synth',str(args.duration),'brownnoise','mix','pinknoise'])
     
     # Set the band and centerfreq
     subprocess_list.extend(['band','-n',str(args.centerfreq),'20000'])
