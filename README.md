@@ -24,6 +24,19 @@ soxnoise -c pink -s -m 0.1 -M 20
 #### To get further help
 soxnoise --help
 
+# Key bindings 
+h       : toggles the help dialogue
+9/0 -/+ : adjusts volume
+m       : toggle mute status
+
+r/R     : adjusts reverb level
+f       : set tremolo frequency
+d/D     : adjusts tremolo depth
+S       : toggles sine modulation mode
+f/F     : adjusts minimum noise volume when sine modulation enabled
+s       : set sine modulation frequency when enabled
+
+
 ## Install
 Minimal install is needed.  The only real requirement is that SoX is installed. 
 A systemwide installation script that grabs dependencies for Linux installs is provided if you wish to use it.

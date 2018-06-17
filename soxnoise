@@ -155,7 +155,7 @@ def tui_init(stdscr):
 
         # Prints the mute status
         if args.volume == 0:
-            stdscr.addstr(1,23,"mute ",curses.color_pair(2))
+            stdscr.addstr(0,23,"mute ",curses.color_pair(2))
             
 
         # Prints the reverb level
@@ -170,7 +170,7 @@ def tui_init(stdscr):
 
         # Prints the sinemod sine frequency if enabled
         if args.sinemod:
-            stdscr.addstr(2,23,"(S)ine: enabled ",curses.color_pair(1))
+            stdscr.addstr(2,23,"sine mode: enabled ",curses.color_pair(1))
             stdscr.addstr(4,1,"(s)ine frequency ",curses.color_pair(2))
             stdscr.addstr(str(args.sinemod_speed),curses.color_pair(2))
             # Prints the sinemod minimum volume
