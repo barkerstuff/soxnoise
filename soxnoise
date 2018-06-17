@@ -34,7 +34,7 @@ colorlist=['pink','brown','white','pinkbrown']
 
 # Set up the parser
 parser = argparse.ArgumentParser(description="An ncurses utility for playing noise on the terminal with SoX")
-parser.set_defaults(color='pink',volume=1,keepvolume=True,reverb=0,maxvol=2,bitdepth=16,tremolo_speed=0.1,tremolo_depth=0,channels=2,duration=0,sinemod=False,sinemod_min_vol=90,sinemod_speed=0.1)
+parser.set_defaults(color='pink',volume=1,keepvolume=True,reverb=0,maxvol=2,bitdepth=16,tremolo_speed=0.1,tremolo_depth=0,channels=2,duration=0,sinemod=True,sinemod_min_vol=90,sinemod_speed=0.1)
 parser.add_argument('-c','--color',help="Selects the colour of the noise to play. Available options are {0}.".format(colorlist))
 parser.add_argument('-C','--channels',help="Selects the number of channels to use.  Default is 2 (stereo)",type=int)
 parser.add_argument('-b','--bitdepth',help="Sets the bit depth.  Typical values are 16 and 24.",type=int)
@@ -152,6 +152,12 @@ def tui_init(stdscr):
             stdscr.addstr(args.color,curses.color_pair(1))
             stdscr.addstr(" vol. ",curses.color_pair(4))
             stdscr.addstr(str(args.volume),curses.color_pair(4))
+
+        # Prints the mute status
+        if args.volume == 0:
+            stdscr.addstr(1,23,"mute ",curses.color_pair(2))
+            
+
         # Prints the reverb level
         stdscr.addstr(2,1,"(r)everb. ",curses.color_pair(1))
         stdscr.addstr(str(args.reverb),curses.color_pair(1))
@@ -164,6 +170,7 @@ def tui_init(stdscr):
 
         # Prints the sinemod sine frequency if enabled
         if args.sinemod:
+            stdscr.addstr(2,23,"(S)ine: enabled ",curses.color_pair(1))
             stdscr.addstr(4,1,"(s)ine frequency ",curses.color_pair(2))
             stdscr.addstr(str(args.sinemod_speed),curses.color_pair(2))
             # Prints the sinemod minimum volume
