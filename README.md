@@ -24,16 +24,16 @@ soxnoise -c pink -s -m 0.1 -M 20
 #### To get further help
 soxnoise --help
 
-# Key bindings 
-h       : toggles the help dialogue
-9/0 -/+ : adjusts volume
-m       : toggle mute status
+## Key bindings 
+h       : toggles the help dialogue<nobr/>
+9/0 -/+ : adjusts volume<nobr/>
+m       : toggle mute status<nobr/>
 
-r/R     : adjusts reverb level
-f       : set tremolo frequency
-d/D     : adjusts tremolo depth
-S       : toggles sine modulation mode
-f/F     : adjusts minimum noise volume when sine modulation enabled
+r/R     : adjusts reverb level<nobr/>
+f       : set tremolo frequency<nobr/>
+d/D     : adjusts tremolo depth<nobr/>
+S       : toggles sine modulation mode<nobr/>
+f/F     : adjusts minimum noise volume when sine modulation enabled<nobr/>
 s       : set sine modulation frequency when enabled
 
 
