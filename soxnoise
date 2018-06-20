@@ -419,13 +419,17 @@ def call_sox(stdscr):
     # Add the colour synth commands
     if ARGS.sinemod:
         if ARGS.color == 'pinkbrown':
-            subprocess_list.extend(['synth', str(ARGS.duration), 'brownnoise', 'synth', 'pinknoise', 'mix', 'synth', 'sine', 'amod', str(ARGS.sinemod_speed), str(ARGS.sinemod_min_vol)])
+            subprocess_list.extend(['synth', str(ARGS.duration), 'brownnoise', 'synth',
+                'pinknoise', 'mix', 'synth', 'sine', 'amod', str(ARGS.sinemod_speed), str(ARGS.sinemod_min_vol)])
         elif ARGS.color == 'brown':
-            subprocess_list.extend(['synth', str(ARGS.duration), 'brownnoise', 'mix', 'synth', 'sine', 'amod', str(ARGS.sinemod_speed), str(ARGS.sinemod_min_vol)])
+            subprocess_list.extend(['synth', str(ARGS.duration), 'brownnoise', 'mix', 'synth',
+                'sine', 'amod', str(ARGS.sinemod_speed), str(ARGS.sinemod_min_vol)])
         elif ARGS.color == 'pink':
-            subprocess_list.extend(['synth', str(ARGS.duration), 'pinknoise', 'mix', 'synth', 'sine', 'amod', str(ARGS.sinemod_speed), str(ARGS.sinemod_min_vol)])
+            subprocess_list.extend(['synth', str(ARGS.duration), 'pinknoise', 'mix', 'synth',
+                'sine', 'amod', str(ARGS.sinemod_speed), str(ARGS.sinemod_min_vol)])
         elif ARGS.color == 'white':
-            subprocess_list.extend(['synth', str(ARGS.duration), 'whitenoise', 'mix', 'synth', 'sine', 'amod', str(ARGS.sinemod_speed), str(ARGS.sinemod_min_vol)])
+            subprocess_list.extend(['synth', str(ARGS.duration), 'whitenoise', 'mix', 'synth',
+                'sine', 'amod', str(ARGS.sinemod_speed), str(ARGS.sinemod_min_vol)])
     else:
         if ARGS.color == 'brown':
             subprocess_list.extend(['synth', str(ARGS.duration), 'brownnoise'])
