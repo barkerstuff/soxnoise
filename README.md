@@ -21,6 +21,8 @@ soxnoise -c white -r 40
 soxnoise -c pink -t 0.1 -T 10 
 #### To simulate ocean type waves with pink noise (minimum volume of 20% and coming every 10 seconds) and soft sine wave modulation
 soxnoise -c pink -s -m 0.1 -M 20
+#### GET TO THE CHOPPA!
+soxnoise -c pinkbrown -s -m 10 -M 20
 #### To get further help
 soxnoise --help
 
