@@ -491,7 +491,7 @@ def cleanup():
         exit(E)
 
     print_license()
-    exit()
+    exit('Caught interrupt. Exiting')
 
 if __name__ == '__main__':
     try:
